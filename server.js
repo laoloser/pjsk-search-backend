@@ -1,7 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
-require('dotenv').config();  // Load environment variables
+require('dotenv').config();
 
 const app = express();
 app.use(cors());
@@ -17,89 +17,49 @@ const pool = new Pool({
 
 app.get('/songs', async (req, res) => {
     try {
-        const { query, minBpm, maxBpm, minLevel, maxLevel, minDuration, maxDuration, minNoteCount, maxNoteCount, unit, availableInEn, commission, difficulty } = req.query;
-        
-        let sql = 'SELECT * FROM songs WHERE 1=1';
-        const params = [];
+        const { term, unit, availableInEn, commission, minLevel, maxLevel } = req.query;
+        let query = 'SELECT * FROM songs WHERE 1=1';
+        let values = [];
 
-        if (query) {
-            sql += ' AND (title ILIKE $1 OR japanese_title ILIKE $1 OR artist ILIKE $1)';
-            params.push(`%${query}%`);
+        if (term) {
+            query += ' AND (title ILIKE $1 OR japanese_title ILIKE $1 OR artist ILIKE $1)';
+            values.push(`%${term}%`);
         }
-        if (minBpm) {
-            sql += ' AND bpm >= $' + (params.length + 1);
-            params.push(minBpm);
-        }
-        if (maxBpm) {
-            sql += ' AND bpm <= $' + (params.length + 1);
-            params.push(maxBpm);
-        }
-        if (minLevel) {
-            sql += ' AND level >= $' + (params.length + 1);
-            params.push(minLevel);
-        }
-        if (maxLevel) {
-            sql += ' AND level <= $' + (params.length + 1);
-            params.push(maxLevel);
-        }
-        if (minDuration) {
-            sql += ' AND duration >= $' + (params.length + 1);
-            params.push(minDuration);
-        }
-        if (maxDuration) {
-            sql += ' AND duration <= $' + (params.length + 1);
-            params.push(maxDuration);
-        }
-        if (minNoteCount) {
-            sql += ' AND note_count >= $' + (params.length + 1);
-            params.push(minNoteCount);
-        }
-        if (maxNoteCount) {
-            sql += ' AND note_count <= $' + (params.length + 1);
-            params.push(maxNoteCount);
-        }
+
         if (unit && unit !== 'all') {
-            sql += ' AND unit = $' + (params.length + 1);
-            params.push(unit);
-        }
-        if (availableInEn) {
-            sql += ' AND available_in_en = true';
-        }
-        if (commission) {
-            sql += ' AND commission = true';
-        }
-        if (difficulty) {
-            const difficulties = difficulty.split(',');
-            sql += ' AND difficulty = ANY($' + (params.length + 1) + ')';
-            params.push(difficulties);
+            query += ' AND unit = $' + (values.length + 1);
+            values.push(unit);
         }
 
-        const result = await pool.query(sql, params);
+        if (availableInEn) {
+            query += ' AND available_in_en = $' + (values.length + 1);
+            values.push(availableInEn === 'true');
+        }
+
+        if (commission) {
+            query += ' AND commission = $' + (values.length + 1);
+            values.push(commission === 'true');
+        }
+
+        if (minLevel) {
+            query += ' AND level >= $' + (values.length + 1);
+            values.push(parseInt(minLevel, 10));
+        }
+
+        if (maxLevel) {
+            query += ' AND level <= $' + (values.length + 1);
+            values.push(parseInt(maxLevel, 10));
+        }
+
+        const result = await pool.query(query, values);
         res.json(result.rows);
     } catch (err) {
-        console.error(err.message);
+        console.error(err);
         res.status(500).send('Server error');
-    }
-});
-
-app.post('/songs', async (req, res) => {
-    const { title, japanese_title, artist, level, bpm, genre, duration, unit, note_count, available_in_en, commission, difficulty } = req.body;
-    const query = `
-        INSERT INTO songs (title, japanese_title, artist, level, bpm, genre, duration, unit, note_count, available_in_en, commission, difficulty)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING *;
-    `;
-    const values = [title, japanese_title, artist, level, bpm, genre, duration, unit, note_count, available_in_en, commission, difficulty];
-    try {
-        const result = await pool.query(query, values);
-        res.status(201).json(result.rows[0]);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
     }
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
