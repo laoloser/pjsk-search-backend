@@ -13,46 +13,47 @@ const db = knex({
 });
 
 app.get('/songs', async (req, res) => {
-    try {
-      const { term, unit, availableInEn, commission, minLevel, maxLevel } = req.query;
-  
-      let query = db('songs');
-  
-      if (term) {
-        query = query.where(function() {
-          this.where('title', 'ilike', `%${term}%`)
-            .orWhere('japanese_title', 'ilike', `%${term}%`)
-            .orWhere('artist', 'ilike', `%${term}%`);
-        });
-      }
-  
-      if (unit && unit !== 'all') {
-        query = query.where('unit', unit);
-      }
-  
-      if (availableInEn === 'true') {
-        query = query.where('available_in_en', true);
-      }
-  
-      if (commission === 'true') {
-        query = query.where('commission', true);
-      }
-  
-      if (minLevel) {
-        query = query.where('level', '>=', minLevel);
-      }
-  
-      if (maxLevel) {
-        query = query.where('level', '<=', maxLevel);
-      }
-  
-      const results = await query.select();
-      res.json(results);
-    } catch (error) {
-      console.error('Error fetching songs:', error);
-      res.status(500).json({ error: 'Internal server error' });
+  try {
+    const { term, unit, availableInEn, commission, minLevel, maxLevel } = req.query;
+
+    let query = db('songs');
+
+    if (term) {
+      query = query.where(function() {
+        this.where('title', 'ilike', `%${term}%`)
+          .orWhere('japanese_title', 'ilike', `%${term}%`)
+          .orWhere('artist', 'ilike', `%${term}%`);
+      });
     }
-  });
+
+    if (unit && unit !== 'all') {
+      query = query.where('unit', unit);
+    }
+
+    if (availableInEn === 'true') {
+      query = query.where('available_in_en', true);
+    }
+
+    if (commission === 'true') {
+      query = query.where('commission', true);
+    }
+
+    if (minLevel) {
+      query = query.where('level', '>=', minLevel);
+    }
+
+    if (maxLevel) {
+      query = query.where('level', '<=', maxLevel);
+    }
+
+    const results = await query.select();
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching songs:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
   
 
 const PORT = process.env.PORT || 5000;
