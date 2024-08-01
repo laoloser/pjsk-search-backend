@@ -54,6 +54,28 @@ app.get('/songs', async (req, res) => {
   }
 });
 
+app.post('/songs', async (req, res) => {
+  const { title, japanese_title, artist, level, bpm, duration, unit, note_count, available_in_en, difficulty, commission } = req.body;
+  try {
+    const result = await db('songs').insert({
+      title: title,
+      japanese_title: japanese_title,
+      artist: artist,
+      level: level,
+      bpm: bpm,
+      duration: duration,
+      unit: unit,
+      note_count: note_count,
+      available_in_en: available_in_en,
+      difficulty: difficulty,
+      commission: commission
+    }).returning('*'); // This ensures that the inserted row is returned after insert
+    res.status(201).json(result[0]); // Send back the newly created song entry
+  } catch (error) {
+    console.error('Failed to add song:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
   
 
 const PORT = process.env.PORT || 5000;
