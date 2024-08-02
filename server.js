@@ -113,7 +113,7 @@ app.post('/songs', async (req, res) => {
 
 app.post('/reset-csvote', async (req, res) => {
   // Check for a specific key in the request header or body
-  if (req.headers['x-custom-auth'] !== 'YourSecretKeyHere') {
+  if (req.headers['x-custom-auth'] !== 'muku') {
       return res.status(403).json({ error: 'Unauthorized access' });
   }
 
