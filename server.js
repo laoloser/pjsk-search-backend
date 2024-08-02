@@ -12,6 +12,34 @@ const db = knex({
   connection: process.env.DATABASE_URL, // Ensure this is correctly set in your .env file
 });
 
+app.post('/csvote', async (req, res) => {
+  const { vote } = req.body;
+  try {
+      const result = await db('csvote').insert({
+          vote
+      }).returning('*');
+      res.status(201).json(result[0]);
+  } catch (error) {
+      console.error('Failed to record vote:', error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/csvote', async (req, res) => {
+  try {
+      const results = await db('csvote')
+          .select('vote')
+          .count('* as count')
+          .groupBy('vote')
+          .orderBy('vote', 'asc');
+      res.json(results);
+  } catch (error) {
+      console.error('Error fetching vote counts:', error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 app.get('/songs', async (req, res) => {
   try {
     const { term, unit, availableInEn, commission, minLevel, maxLevel, sortBy } = req.query;
