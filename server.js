@@ -14,8 +14,7 @@ const db = knex({
 
 app.get('/songs', async (req, res) => {
   try {
-    const { term, unit, availableInEn, commission, minLevel, maxLevel } = req.query;
-
+    const { term, unit, availableInEn, commission, minLevel, maxLevel, sortBy } = req.query;
     let query = db('songs');
 
     if (term) {
@@ -46,6 +45,13 @@ app.get('/songs', async (req, res) => {
       query = query.where('level', '<=', maxLevel);
     }
 
+    // Add sorting functionality based on the sortBy parameter
+    if (sortBy) {
+      query = query.orderBy(sortBy, 'asc'); // Sorting in ascending order by default
+    } else {
+      query = query.orderBy('title', 'asc'); // Default sorting by title if sortBy is not specified
+    }
+
     const results = await query.select();
     res.json(results);
   } catch (error) {
@@ -69,14 +75,13 @@ app.post('/songs', async (req, res) => {
       available_in_en: available_in_en,
       difficulty: difficulty,
       commission: commission
-    }).returning('*'); // This ensures that the inserted row is returned after insert
-    res.status(201).json(result[0]); // Send back the newly created song entry
+    }).returning('*');
+    res.status(201).json(result[0]);
   } catch (error) {
     console.error('Failed to add song:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-  
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
