@@ -111,6 +111,23 @@ app.post('/songs', async (req, res) => {
   }
 });
 
+app.post('/reset-csvote', async (req, res) => {
+  // Check for a specific key in the request header or body
+  if (req.headers['x-custom-auth'] !== 'YourSecretKeyHere') {
+      return res.status(403).json({ error: 'Unauthorized access' });
+  }
+
+  try {
+      await db('csvote').del();  // Delete all records from the csvote table
+      res.status(200).json({ message: 'All votes have been deleted successfully.' });
+  } catch (error) {
+      console.error('Error deleting votes:', error);
+      res.status(500).json({ error: 'Failed to delete votes due to an internal error.' });
+  }
+});
+
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
