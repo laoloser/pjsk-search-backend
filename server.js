@@ -73,11 +73,18 @@ app.get('/songs', async (req, res) => {
       query = query.where('level', '<=', maxLevel);
     }
 
-    // Update here to add secondary sorting by difficulty
-    query = query.orderBy([
-      { column: sortBy || 'title', order: 'asc' }, // Primary sorting by sortBy or default to title
-      { column: 'difficulty', order: 'asc' } // Secondary sorting by difficulty
-    ]);
+    // Add custom sorting by difficulty using a CASE statement
+    query = query.orderByRaw(`
+      ${sortBy ? '?? asc,' : ''} CASE difficulty
+        WHEN 'Easy' THEN 1
+        WHEN 'Normal' THEN 2
+        WHEN 'Hard' THEN 3
+        WHEN 'Expert' THEN 4
+        WHEN 'Master' THEN 5
+        WHEN 'Append' THEN 6
+        ELSE 7
+      END ASC
+    `, sortBy ? [sortBy] : []);
 
     const results = await query.select();
     res.json(results);
@@ -86,6 +93,7 @@ app.get('/songs', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 
 app.post('/songs', async (req, res) => {
