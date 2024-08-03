@@ -73,12 +73,11 @@ app.get('/songs', async (req, res) => {
       query = query.where('level', '<=', maxLevel);
     }
 
-    // Add sorting functionality based on the sortBy parameter
-    if (sortBy) {
-      query = query.orderBy(sortBy, 'asc'); // Sorting in ascending order by default
-    } else {
-      query = query.orderBy('title', 'asc'); // Default sorting by title if sortBy is not specified
-    }
+    // Update here to add secondary sorting by difficulty
+    query = query.orderBy([
+      { column: sortBy || 'title', order: 'asc' }, // Primary sorting by sortBy or default to title
+      { column: 'difficulty', order: 'asc' } // Secondary sorting by difficulty
+    ]);
 
     const results = await query.select();
     res.json(results);
@@ -87,6 +86,7 @@ app.get('/songs', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 app.post('/songs', async (req, res) => {
   const { title, japanese_title, artist, level, bpm, duration, unit, note_count, available_in_en, difficulty, commission } = req.body;
